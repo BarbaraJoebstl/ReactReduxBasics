@@ -74,6 +74,45 @@
             }
         }
 
+
+        function handleInitialData() {
+            return (dispatch) => {
+                return Promise.all([
+                    API.fetchTodos(),
+                    API.fetchGoals()
+                ]).then(([todos, goals]) => {
+                    dispatch(receiveDataAction(todos, goals))
+                })
+            }
+        }
+
+        function handleAddTodo(name, cb) {
+            return (dispatch) => {
+            // we don t do optimistic updates here, because the id is generate on the server
+            return API.saveTodo(name)
+                    .then((todo) => {
+                        dispatch(addTodoAction(todo))
+                        cb()
+                    })
+                    .catch(() => {
+                        alert('An error occured.')
+                    })
+                }
+        }
+
+    
+        function handleToggle(id) {
+            return (dispatch) => {
+                dispatch(toggleTodoAction(id))
+
+                return API.saveTodoToggle(id)
+                .catch(() => {
+                    dispatch(toggleTodoAction(id))
+                    alert('An error occured')
+                })
+            }
+        }
+
         function handleDeleteTodo(todo) {
             return (dispatch) => {
 
@@ -85,6 +124,17 @@
                     dispatch(addTodoAction(todo))
                     alert('An error occured')
                 })
+            }
+        }
+
+        function handleAddGoal(name, cb) {
+            return (dispatch) => {
+                return API.saveGoal(name)
+                .then((goal) => {
+                    dispatch(addGoalAction(goal))
+                    cb()
+                })
+                .catch(() => alert('An error occured'))
             }
         }
 
@@ -193,30 +243,19 @@
             addItem = (e) => {
                 e.preventDefault();
 
-                // we don t do optimistic updates here, because the id is generate on the server
-                return API.saveTodo(this.input.value)
-                    .then((todo) => {
-                        this.props.store.dispatch(addTodoAction(todo))
-                        this.input.value = ''
-                    })
-                    .catch(() => {
-                        alert('An error occured.')
-                    })
-                };
+
+                this.props.store.dispatch(handleAddTodo(
+                    this.input.value,
+                    () => this.input.value = '' 
+                ))};
                 
             removeItem = (todo)=> {
+                // use thunk lib for cleaner separation between UI logic and data fetching logic
                 this.props.store.dispatch(handleDeleteTodo(todo))
             };
                 
             toggleItem = (id) => { 
-                //optimistic update
-                this.props.store.dispatch(toggleTodoAction(id))
-                
-                return API.saveTodoToggle(todo.id)
-                    .catch(() => {
-                        this.props.store.dispatch(toggleTodoAction(id))
-                        alert('An error occure. :/')
-                    })
+                this.props.store.dispatch(handleToggle(id))
             };
                 
                 render() { return (
@@ -232,13 +271,10 @@
         class Goals extends React.Component { 
             addItem = (e) => {
                 e.preventDefault(); 
-                
-                return API.saveGoal(this.input.value)
-                    .then((goal) => {
-                        this.props.store.dispatch(addGoalAction(goal))
-                        this.input.value = ''
-                    })
-                    .catch(() => alert ('There was an error.'))
+                this.props.store.dispatch(handleAddGoal(
+                    this.input.value,
+                    () => this.input.value = '' 
+                ))
             }; 
         
             removeItem = (goal) => { 
@@ -255,8 +291,11 @@
         
         class App extends React.Component { 
             
-            componentDidMount() { const {store} = this.props; 
-            Promise.all([ API.fetchTodos(), API.fetchGoals() ]).then(([todos,goals]) => { store.dispatch(receiveDataAction(todos, goals)) });store.subscribe(() => this.forceUpdate()) };
+            componentDidMount() { 
+                const {store} = this.props; 
+                
+                store.dispatch(handleInitialData())
+                store.subscribe(() => this.forceUpdate()) };
         
             render() {
                  const {store} = this.props; 
