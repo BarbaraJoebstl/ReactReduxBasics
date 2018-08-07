@@ -11,6 +11,7 @@
     <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
     <script src="https://tylermcginnis.com/goals-todos-api/index.js"></script>
     <script src="https://unpkg.com/redux-thunk@2.2.0/dist/redux-thunk.min.js"></script>
+    <script src="https://unpkg.com/react-redux@5.0.6/dist/react-redux.min.js"></script>
 </head>
 
 <body>
@@ -27,7 +28,6 @@
         const ADD_GOAL = 'ADD_GOAL'
         const REMOVE_GOAL = 'REMOVE_GOAL'
         const RECEIVE_DATA = 'RECEIVE_DATA'
-
 
         // action creator functions -> those are better, because we don t have that much duplicate code
         function addTodoAction(todo) {
@@ -99,7 +99,7 @@
                 }
         }
 
-    
+
         function handleToggle(id) {
             return (dispatch) => {
                 dispatch(toggleTodoAction(id))
@@ -138,7 +138,7 @@
         }
 
         function handleDeleteGoal(goal) {
-            return (dispatch) => { 
+            return (dispatch) => {
                 dispatch(removeGoalAction(goal.id))
                 return API.deleteGoal(goal.id)
                     .catch(() => {
@@ -183,7 +183,7 @@
 
         function loading (state=true, action) {
             switch(action.type) {
-                case RECEIVE_DATA: 
+                case RECEIVE_DATA:
                     return false
                 default:
                     return state
@@ -235,51 +235,52 @@
             </li>
             ))}
         </ul>
-        ) } 
-        
-        class Todos extends React.Component { 
+        ) }
+
+        class Todos extends React.Component {
 
             addItem = (e) => {
                 e.preventDefault();
 
                 this.props.dispatch(handleAddTodo(
                     this.input.value,
-                    () => this.input.value = '' 
+                    () => this.input.value = ''
                 ))};
-                
+
             removeItem = (todo)=> {
                 // use thunk lib for cleaner separation between UI logic and data fetching logic
                 this.props.dispatch(handleDeleteTodo(todo))
             };
-                
-            toggleItem = (id) => { 
+
+            toggleItem = (id) => {
                 this.props.dispatch(handleToggle(id))
             };
-                
+
                 render() { return (
                 <div>
                     <h1>Todo List</h1>
                     <input type='text' placeholder='Add Todo' ref={ (input)=> this.input = input} />
 
                     <button onClick={this.addItem}>Add Todo</button>
-                    <List toggle={this.toggleItem} items={this.props.todos} remove={this.removeItem} />
+                    <List toggle={this.toggleItem}
+                          items={this.props.todos} remove={this.removeItem} />
                 </div>
         ) } }
 
-        const ConnectedTodos = connect((state) => ({
+        const ConnectedTodos = ReactRedux.connect((state) => ({
             todos: state.todos
         }))(Todos)
 
-        class Goals extends React.Component { 
+        class Goals extends React.Component {
             addItem = (e) => {
-                e.preventDefault(); 
+                e.preventDefault();
                 this.props.dispatch(handleAddGoal(
                     this.input.value,
-                    () => this.input.value = '' 
+                    () => this.input.value = ''
                 ))
-            }; 
-        
-            removeItem = (goal) => { 
+            };
+
+            removeItem = (goal) => {
                 this.props.dispatch(handleDeleteGoal(goal))
             };
              render() { return (
@@ -287,19 +288,20 @@
                 <h1>Goals</h1>
                 <input type='text' placeholder='Add Goal' ref={(input)=> this.input = input} />
                 <button onClick={this.addItem}>Add Goal</button>
-                <List items={ this.props.goals} remove={this.removeItem} />
+                <List items={ this.props.goals}
+                      remove={this.removeItem} />
             </div>
         ) } }
 
-        const ConnectedGoals = connect((state) => ({
+        const ConnectedGoals = ReactRedux.connect((state) => ({
             todos: state.goals
         }))(Goals)
 
+        class App extends React.Component {
 
-        class App extends React.Component { 
-            
             componentDidMount() {
                 const {dispatch} = this.props
+
                 dispatch(handleInitialData())
             }
 
@@ -316,32 +318,16 @@
             }
         }
 
-        const ConnectedApp = connect((state) => ({
+        // connect function is passed the store, any properties that we return on this object will be passed as props to our App component
+        const ConnectedApp = ReactRedux.connect((state) => ({
             loading: state.loading
         }))(App)
 
-        // connect function is passed the store, any properties that we return on this object will be passed as props to our App component
-        const ConnectedApp = connect((store) => ({
-            loading: store.loading
-        }))(App)
-
-        const Context = React.createContext()
-        
-        class Provider extends React.Component {
-            render () {
-                return (
-                    // the store should be available for every child component
-                <Context.Provider value={this.props.store}>
-                    {this.props.children}
-                </Context.Provider>
-                )
-            }
-        }
 
         ReactDOM.render(
-            <Provider store={store}>
+            <ReactRedux.Provider store={store}>
                 <ConnectedApp />
-            </Provider>, document.getElementById('app')
+            </ReactRedux.Provider>, document.getElementById('app')
         )
     </script>
 </body>
