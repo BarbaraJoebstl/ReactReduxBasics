@@ -4,7 +4,6 @@ import ConnectedGoals from './Goals'
 import { connect } from 'react-redux'
 import {handleInitialData} from "../actions/share";
 
-
 class App extends React.Component {
 
     componentDidMount() {
@@ -22,7 +21,8 @@ class App extends React.Component {
             <div>
                 <ConnectedTodos />
                 <ConnectedGoals />
-            </div> )
+            </div>
+        )
     }
 }
 
